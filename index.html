@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Europe Capitals Quiz</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      margin:0;padding:24px;display:grid;place-items:center;
+      background:#0b1020;color:#eef2ff;
+    }
+    .card{
+      width:min(820px,100%);
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:18px;
+      padding:22px;
+      box-shadow:0 12px 35px rgba(0,0,0,0.35);
+    }
+    h1{margin:0 0 10px;font-size:22px}
+    .sub{opacity:.85;margin:0 0 18px}
+    .topbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px;opacity:.95}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{
+      padding:6px 10px;border-radius:999px;
+      background:rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.14);
+    }
+    .smallbtn{
+      padding:8px 10px;border-radius:10px;
+      border:1px solid rgba(255,255,255,0.18);
+      background:rgba(255,255,255,0.08);
+      color:inherit;cursor:pointer;
+    }
+    .smallbtn:hover{background:rgba(255,255,255,0.12)}
+    .country{
+      font-size:34px;font-weight:800;letter-spacing:.3px;
+      margin:14px 0 10px; display:flex; gap:10px; align-items:baseline;
+    }
+    .flag{font-size:34px}
+    .choices{display:grid;gap:10px;margin-top:12px}
+    button.choice{
+      text-align:left;font-size:16px;padding:14px 14px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.18);
+      background:rgba(255,255,255,0.08);color:inherit;cursor:pointer;
+      transition:transform .06s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+    }
+    button.choice:hover{background:rgba(255,255,255,0.12)}
+    button.choice:active{transform:translateY(1px)}
+    button.choice[disabled]{cursor:not-allowed;opacity:.75}
+    .feedback{
+      margin-top:14px;padding:12px 14px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.14);
+      background:rgba(255,255,255,0.06);
+      min-height:22px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .ok{border-color:rgba(96,255,170,.35)}
+    .no{border-color:rgba(255,110,110,.35)}
+    .hint{opacity:.85}
+    .toggles{
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;
+      font-size:14px; opacity:.95;
+    }
+    label.toggle{
+      display:flex; gap:8px; align-items:center;
+      padding:8px 10px; border-radius:12px;
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.12);
+      cursor:pointer; user-select:none;
+    }
+    input[type="checkbox"]{ transform: translateY(1px); }
+    @media (prefers-color-scheme: light){
+      body{background:#f6f8ff;color:#10162a}
+      .card{background:white;border-color:rgba(16,22,42,.12);box-shadow:0 12px 35px rgba(16,22,42,0.08)}
+      button.choice{background:#f3f5ff;border-color:rgba(16,22,42,.12)}
+      button.choice:hover{background:#e9edff}
+      .feedback{background:#f7f8ff;border-color:rgba(16,22,42,.12)}
+      .pill,.smallbtn,label.toggle{background:#f3f5ff;border-color:rgba(16,22,42,.12)}
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="topbar">
+      <div class="row">
+        <div class="pill">Region: <strong>Europe</strong></div>
+        <div class="pill">Score: <strong id="score">0</strong></div>
+        <div class="pill">Lives: <strong id="lives">3</strong></div>
+        <div class="pill">Streak: <strong id="streak">0</strong></div>
+        <div class="pill">Q: <strong id="qnum">1</strong>/<strong id="qtotal">0</strong></div>
+      </div>
+      <div class="row">
+        <button class="smallbtn" id="skipBtn" title="Skip this country">Skip</button>
+        <button class="smallbtn" id="resetBtn" title="Reset everything">Reset</button>
+      </div>
+    </div>
+
+    <div class="toggles">
+      <label class="toggle" title="Learn mode: reveal answer immediately and use Next button">
+        <input id="learnMode" type="checkbox" />
+        Learn mode
+      </label>
+      <label class="toggle" title="Include microstates (Andorra, Monaco, San Marino, Vatican, Liechtenstein)">
+        <input id="includeMicro" type="checkbox" checked />
+        Include microstates
+      </label>
+      <label class="toggle" title="Include Russia (often considered transcontinental)">
+        <input id="includeRussia" type="checkbox" checked />
+        Include Russia
+      </label>
+    </div>
+
+    <h1>Pick the correct capital</h1>
+    <p class="sub">Choose one of three capitals for the country shown.</p>
+
+    <div class="country">
+      <span class="flag" id="flag">🏳️</span>
+      <span id="countryName">—</span>
+    </div>
+
+    <div class="choices" id="choices"></div>
+
+    <div class="feedback" id="feedback">
+      <span id="feedbackText">Select a capital.</span>
+      <span class="hint" id="hintArea"></span>
+    </div>
+  </div>
+
+  <script>
+    // Data format:
+    // [country, capital, ISO2, isMicrostate, isRussia]
+    const EUROPE_ALL = [
+      ["Albania","Tirana","AL",false,false],
+      ["Andorra","Andorra la Vella","AD",true,false],
+      ["Austria","Vienna","AT",false,false],
+      ["Belarus","Minsk","BY",false,false],
+      ["Belgium","Brussels","BE",false,false],
+      ["Bosnia and Herzegovina","Sarajevo","BA",false,false],
+      ["Bulgaria","Sofia","BG",false,false],
+      ["Croatia","Zagreb","HR",false,false],
+      ["Cyprus","Nicosia","CY",false,false],
+      ["Czechia","Prague","CZ",false,false],
+      ["Denmark","Copenhagen","DK",false,false],
+      ["Estonia","Tallinn","EE",false,false],
+      ["Finland","Helsinki","FI",false,false],
+      ["France","Paris","FR",false,false],
+      ["Germany","Berlin","DE",false,false],
+      ["Greece","Athens","GR",false,false],
+      ["Hungary","Budapest","HU",false,false],
+      ["Iceland","Reykjavik","IS",false,false],
+      ["Ireland","Dublin","IE",false,false],
+      ["Italy","Rome","IT",false,false],
+      ["Kosovo","Pristina","XK",false,false],
+      ["Latvia","Riga","LV",false,false],
+      ["Liechtenstein","Vaduz","LI",true,false],
+      ["Lithuania","Vilnius","LT",false,false],
+      ["Luxembourg","Luxembourg","LU",false,false],
+      ["Malta","Valletta","MT",false,false],
+      ["Moldova","Chișinău","MD",false,false],
+      ["Monaco","Monaco","MC",true,false],
+      ["Montenegro","Podgorica","ME",false,false],
+      ["Netherlands","Amsterdam","NL",false,false],
+      ["North Macedonia","Skopje","MK",false,false],
+      ["Norway","Oslo","NO",false,false],
+      ["Poland","Warsaw","PL",false,false],
+      ["Portugal","Lisbon","PT",false,false],
+      ["Romania","Bucharest","RO",false,false],
+      ["Russia","Moscow","RU",false,true],
+      ["San Marino","San Marino","SM",true,false],
+      ["Serbia","Belgrade","RS",false,false],
+      ["Slovakia","Bratislava","SK",false,false],
+      ["Slovenia","Ljubljana","SI",false,false],
+      ["Spain","Madrid","ES",false,false],
+      ["Sweden","Stockholm","SE",false,false],
+      ["Switzerland","Bern","CH",false,false],
+      ["Ukraine","Kyiv","UA",false,false],
+      ["United Kingdom","London","GB",false,false],
+      ["Vatican City","Vatican City","VA",true,false]
+    ];
+
+    // --- Helpers ---
+    function shuffle(arr){
+      for(let i=arr.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]]=[arr[j],arr[i]];
+      }
+      return arr;
+    }
+
+    function iso2ToFlag(iso2){
+      // Turn "SE" -> 🇸🇪 (regional indicator symbols)
+      // Works in most modern browsers/fonts; if not supported, it'll show letters.
+      if(!iso2 || iso2.length !== 2) return "🏳️";
+      const A = 0x1F1E6;
+      const codePoints = [...iso2.toUpperCase()].map(ch => A + (ch.charCodeAt(0) - 65));
+      return String.fromCodePoint(...codePoints);
+    }
+
+    function buildDataset(){
+      const includeMicro = $includeMicro.checked;
+      const includeRussia = $includeRussia.checked;
+      const filtered = EUROPE_ALL.filter(([,, , isMicro, isRu]) => {
+        if(!includeMicro && isMicro) return false;
+        if(!includeRussia && isRu) return false;
+        return true;
+      });
+      return filtered;
+    }
+
+    function pickWrongCapitals(dataset, correctCapital, count=2){
+      const capitals = dataset.map(x => x[1]).filter(c => c !== correctCapital);
+      shuffle(capitals);
+      return capitals.slice(0, count);
+    }
+
+    // --- UI refs ---
+    const $country = document.getElementById("countryName");
+    const $flag = document.getElementById("flag");
+    const $choices = document.getElementById("choices");
+    const $feedback = document.getElementById("feedback");
+    const $feedbackText = document.getElementById("feedbackText");
+    const $hintArea = document.getElementById("hintArea");
+
+    const $score = document.getElementById("score");
+    const $lives = document.getElementById("lives");
+    const $streak = document.getElementById("streak");
+    const $qnum = document.getElementById("qnum");
+    const $qtotal = document.getElementById("qtotal");
+
+    const $skip = document.getElementById("skipBtn");
+    const $reset = document.getElementById("resetBtn");
+
+    const $learnMode = document.getElementById("learnMode");
+    const $includeMicro = document.getElementById("includeMicro");
+    const $includeRussia = document.getElementById("includeRussia");
+
+    // --- State ---
+    let dataset = buildDataset();
+    let pool = shuffle([...dataset]); // countries left
+    let current = null;              // [country, capital, iso2, ...]
+    let score = 0;
+    let streak = 0;
+    let lives = 3;
+    let qnum = 1;
+
+    function setFeedback(text, kind="", hint=""){
+      $feedbackText.textContent = text;
+      $hintArea.textContent = hint;
+      $feedback.classList.remove("ok","no");
+      if(kind) $feedback.classList.add(kind);
+    }
+
+    function updateTop(){
+      $score.textContent = String(score);
+      $streak.textContent = String(streak);
+      $lives.textContent = String(lives);
+      $qnum.textContent = String(qnum);
+      $qtotal.textContent = String(dataset.length);
+    }
+
+    function renderQuestion(){
+      dataset = buildDataset();
+      // If toggles changed mid-game, rebuild pool but keep score etc.
+      // Easiest: reset pool to remaining unique countries (no duplicates) starting fresh:
+      // We’ll do a clean reset when toggles change, to avoid confusing state.
+      updateTop();
+
+      if(pool.length === 0){
+        $country.textContent = "Done!";
+        $flag.textContent = "🏁";
+        $choices.innerHTML = "";
+        setFeedback(`Finished! Final score: ${score}/${dataset.length}.`, "ok", "Press Reset to play again.");
+        $skip.disabled = true;
+        return;
+      }
+
+      $skip.disabled = false;
+      current = pool[0];
+      const [country, capital, iso2] = current;
+
+      $country.textContent = country;
+      $flag.textContent = iso2ToFlag(iso2);
+
+      const options = shuffle([capital, ...pickWrongCapitals(dataset, capital, 2)]);
+      $choices.innerHTML = "";
+
+      if($learnMode.checked){
+        // In learn mode, we reveal answer immediately and allow Next.
+        setFeedback(`Answer: ${capital}`, "ok", "Now pick it (or click Next).");
+      } else {
+        setFeedback("Select a capital.", "", lives <= 1 ? "Careful: last life!" : "");
+      }
+
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.type = "button";
+        btn.textContent = opt;
+        btn.addEventListener("click", () => handleGuess(opt));
+        $choices.appendChild(btn);
+      });
+
+      // In learn mode, add a Next button at the end.
+      if($learnMode.checked){
+        const next = document.createElement("button");
+        next.className = "choice";
+        next.type = "button";
+        next.textContent = "Next →";
+        next.addEventListener("click", () => advance(true));
+        $choices.appendChild(next);
+      }
+    }
+
+    function disableChoices(){
+      [...$choices.querySelectorAll("button.choice")].forEach(b => b.disabled = true);
+    }
+
+    function advance(skipped=false){
+      // move on, reset lives per question
+      pool.shift();
+      qnum += 1;
+      lives = 3;
+      if(skipped){
+        streak = 0;
+      }
+      updateTop();
+      renderQuestion();
+    }
+
+    function handleGuess(selected){
+      if(!current) return;
+      const [country, correctCapital] = current;
+
+      if(selected === correctCapital){
+        score += 1;
+        streak += 1;
+        setFeedback(`✅ Correct! ${country}'s capital is ${correctCapital}.`, "ok", streak >= 3 ? `🔥 Streak: ${streak}` : "");
+        updateTop();
+        disableChoices();
+        setTimeout(() => advance(false), 650);
+        return;
+      }
+
+      // wrong:
+      streak = 0;
+      lives -= 1;
+      updateTop();
+
+      if(lives > 0){
+        setFeedback("❌ Not quite — try again.", "no", `Lives left: ${lives}`);
+        return; // keep buttons active
+      }
+
+      // Out of lives: reveal and move on
+      setFeedback(`💥 Out of lives. ${country}'s capital is ${correctCapital}.`, "no", "Next question…");
+      disableChoices();
+      setTimeout(() => advance(true), 900);
+    }
+
+    // --- Controls ---
+    $skip.addEventListener("click", () => {
+      if(!current) return;
+      setFeedback(`Skipped. ${current[0]}'s capital is ${current[1]}.`, "", "Next question…");
+      disableChoices();
+      setTimeout(() => advance(true), 650);
+    });
+
+    $reset.addEventListener("click", () => {
+      score = 0; streak = 0; lives = 3; qnum = 1;
+      dataset = buildDataset();
+      pool = shuffle([...dataset]);
+      current = null;
+      updateTop();
+      renderQuestion();
+    });
+
+    function resetForToggleChange(){
+      // clean reset, but keep it friendly
+      score = 0; streak = 0; lives = 3; qnum = 1;
+      dataset = buildDataset();
+      pool = shuffle([...dataset]);
+      current = null;
+      updateTop();
+      renderQuestion();
+    }
+
+    $learnMode.addEventListener("change", () => renderQuestion());
+    $includeMicro.addEventListener("change", resetForToggleChange);
+    $includeRussia.addEventListener("change", resetForToggleChange);
+
+    // Init
+    dataset = buildDataset();
+    pool = shuffle([...dataset]);
+    updateTop();
+    renderQuestion();
+  </script>
+</body>
+</html>
