@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Europe Capitals Quiz</title>
+  <title>Europe Capitals Quiz (35 Questions)</title>
   <style>
     :root { color-scheme: light dark; }
     body{
@@ -12,7 +12,7 @@
       background:#0b1020;color:#eef2ff;
     }
     .card{
-      width:min(820px,100%);
+      width:min(900px,100%);
       background:rgba(255,255,255,0.06);
       border:1px solid rgba(255,255,255,0.12);
       border-radius:18px;
@@ -21,7 +21,10 @@
     }
     h1{margin:0 0 10px;font-size:22px}
     .sub{opacity:.85;margin:0 0 18px}
-    .topbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px;opacity:.95}
+    .topbar{
+      display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      font-size:14px;opacity:.95;margin-bottom:14px;
+    }
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .pill{
       padding:6px 10px;border-radius:999px;
@@ -37,9 +40,19 @@
     .smallbtn:hover{background:rgba(255,255,255,0.12)}
     .country{
       font-size:34px;font-weight:800;letter-spacing:.3px;
-      margin:14px 0 10px; display:flex; gap:10px; align-items:baseline;
+      margin:10px 0 12px; display:flex; gap:12px; align-items:center;
     }
-    .flag{font-size:34px}
+    .flagWrap{
+      width:48px;height:36px;border-radius:10px;overflow:hidden;
+      border:1px solid rgba(255,255,255,0.18);
+      background:rgba(255,255,255,0.08);
+      display:grid;place-items:center;
+      flex: 0 0 auto;
+    }
+    .flagWrap img{width:100%;height:100%;object-fit:cover;display:block}
+    .flagFallback{
+      font-size:12px;opacity:.85;font-weight:700;letter-spacing:.5px;
+    }
     .choices{display:grid;gap:10px;margin-top:12px}
     button.choice{
       text-align:left;font-size:16px;padding:14px 14px;border-radius:12px;
@@ -50,35 +63,33 @@
     button.choice:hover{background:rgba(255,255,255,0.12)}
     button.choice:active{transform:translateY(1px)}
     button.choice[disabled]{cursor:not-allowed;opacity:.75}
-    .feedback{
+    .note{
       margin-top:14px;padding:12px 14px;border-radius:12px;
       border:1px solid rgba(255,255,255,0.14);
       background:rgba(255,255,255,0.06);
       min-height:22px;
-      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+      opacity:.9;
     }
-    .ok{border-color:rgba(96,255,170,.35)}
-    .no{border-color:rgba(255,110,110,.35)}
-    .hint{opacity:.85}
-    .toggles{
-      display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;
-      font-size:14px; opacity:.95;
-    }
-    label.toggle{
-      display:flex; gap:8px; align-items:center;
-      padding:8px 10px; border-radius:12px;
+    .results{
+      margin-top:18px;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.14);
       background:rgba(255,255,255,0.06);
-      border:1px solid rgba(255,255,255,0.12);
-      cursor:pointer; user-select:none;
     }
-    input[type="checkbox"]{ transform: translateY(1px); }
+    .results h2{margin:0 0 10px;font-size:18px}
+    .wrongList{margin:10px 0 0; padding-left: 18px}
+    .wrongList li{margin:8px 0; line-height:1.35}
+    code.k{padding:2px 6px;border-radius:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12)}
     @media (prefers-color-scheme: light){
       body{background:#f6f8ff;color:#10162a}
       .card{background:white;border-color:rgba(16,22,42,.12);box-shadow:0 12px 35px rgba(16,22,42,0.08)}
       button.choice{background:#f3f5ff;border-color:rgba(16,22,42,.12)}
       button.choice:hover{background:#e9edff}
-      .feedback{background:#f7f8ff;border-color:rgba(16,22,42,.12)}
-      .pill,.smallbtn,label.toggle{background:#f3f5ff;border-color:rgba(16,22,42,.12)}
+      .note,.results{background:#f7f8ff;border-color:rgba(16,22,42,.12)}
+      .pill,.smallbtn{background:#f3f5ff;border-color:rgba(16,22,42,.12)}
+      .flagWrap{background:#f3f5ff;border-color:rgba(16,22,42,.12)}
+      code.k{background:#f3f5ff;border-color:rgba(16,22,42,.12)}
     }
   </style>
 </head>
@@ -87,101 +98,91 @@
     <div class="topbar">
       <div class="row">
         <div class="pill">Region: <strong>Europe</strong></div>
-        <div class="pill">Score: <strong id="score">0</strong></div>
-        <div class="pill">Lives: <strong id="lives">3</strong></div>
-        <div class="pill">Streak: <strong id="streak">0</strong></div>
-        <div class="pill">Q: <strong id="qnum">1</strong>/<strong id="qtotal">0</strong></div>
+        <div class="pill">Question: <strong id="qnum">1</strong>/35</div>
       </div>
       <div class="row">
-        <button class="smallbtn" id="skipBtn" title="Skip this country">Skip</button>
-        <button class="smallbtn" id="resetBtn" title="Reset everything">Reset</button>
+        <button class="smallbtn" id="resetBtn" title="Start a new 35-question quiz">New 35</button>
       </div>
-    </div>
-
-    <div class="toggles">
-      <label class="toggle" title="Learn mode: reveal answer immediately and use Next button">
-        <input id="learnMode" type="checkbox" />
-        Learn mode
-      </label>
-      <label class="toggle" title="Include microstates (Andorra, Monaco, San Marino, Vatican, Liechtenstein)">
-        <input id="includeMicro" type="checkbox" checked />
-        Include microstates
-      </label>
-      <label class="toggle" title="Include Russia (often considered transcontinental)">
-        <input id="includeRussia" type="checkbox" checked />
-        Include Russia
-      </label>
     </div>
 
     <h1>Pick the correct capital</h1>
-    <p class="sub">Choose one of three capitals for the country shown.</p>
+    <p class="sub">35 random countries. No feedback until the final score.</p>
 
     <div class="country">
-      <span class="flag" id="flag">🏳️</span>
-      <span id="countryName">—</span>
+      <div class="flagWrap" id="flagWrap">
+        <!-- Flag image injected here -->
+      </div>
+      <div id="countryName">—</div>
     </div>
 
     <div class="choices" id="choices"></div>
 
-    <div class="feedback" id="feedback">
-      <span id="feedbackText">Select a capital.</span>
-      <span class="hint" id="hintArea"></span>
-    </div>
+    <div class="note" id="note">Pick one option. We’ll show your final score at the end.</div>
+
+    <div class="results" id="results" style="display:none;"></div>
   </div>
 
   <script>
-    // Data format:
-    // [country, capital, ISO2, isMicrostate, isRussia]
-    const EUROPE_ALL = [
-      ["Albania","Tirana","AL",false,false],
-      ["Andorra","Andorra la Vella","AD",true,false],
-      ["Austria","Vienna","AT",false,false],
-      ["Belarus","Minsk","BY",false,false],
-      ["Belgium","Brussels","BE",false,false],
-      ["Bosnia and Herzegovina","Sarajevo","BA",false,false],
-      ["Bulgaria","Sofia","BG",false,false],
-      ["Croatia","Zagreb","HR",false,false],
-      ["Cyprus","Nicosia","CY",false,false],
-      ["Czechia","Prague","CZ",false,false],
-      ["Denmark","Copenhagen","DK",false,false],
-      ["Estonia","Tallinn","EE",false,false],
-      ["Finland","Helsinki","FI",false,false],
-      ["France","Paris","FR",false,false],
-      ["Germany","Berlin","DE",false,false],
-      ["Greece","Athens","GR",false,false],
-      ["Hungary","Budapest","HU",false,false],
-      ["Iceland","Reykjavik","IS",false,false],
-      ["Ireland","Dublin","IE",false,false],
-      ["Italy","Rome","IT",false,false],
-      ["Kosovo","Pristina","XK",false,false],
-      ["Latvia","Riga","LV",false,false],
-      ["Liechtenstein","Vaduz","LI",true,false],
-      ["Lithuania","Vilnius","LT",false,false],
-      ["Luxembourg","Luxembourg","LU",false,false],
-      ["Malta","Valletta","MT",false,false],
-      ["Moldova","Chișinău","MD",false,false],
-      ["Monaco","Monaco","MC",true,false],
-      ["Montenegro","Podgorica","ME",false,false],
-      ["Netherlands","Amsterdam","NL",false,false],
-      ["North Macedonia","Skopje","MK",false,false],
-      ["Norway","Oslo","NO",false,false],
-      ["Poland","Warsaw","PL",false,false],
-      ["Portugal","Lisbon","PT",false,false],
-      ["Romania","Bucharest","RO",false,false],
-      ["Russia","Moscow","RU",false,true],
-      ["San Marino","San Marino","SM",true,false],
-      ["Serbia","Belgrade","RS",false,false],
-      ["Slovakia","Bratislava","SK",false,false],
-      ["Slovenia","Ljubljana","SI",false,false],
-      ["Spain","Madrid","ES",false,false],
-      ["Sweden","Stockholm","SE",false,false],
-      ["Switzerland","Bern","CH",false,false],
-      ["Ukraine","Kyiv","UA",false,false],
-      ["United Kingdom","London","GB",false,false],
-      ["Vatican City","Vatican City","VA",true,false]
+    // [country, capital, ISO2]
+    const EUROPE = [
+      ["Albania","Tirana","AL"],
+      ["Andorra","Andorra la Vella","AD"],
+      ["Austria","Vienna","AT"],
+      ["Belarus","Minsk","BY"],
+      ["Belgium","Brussels","BE"],
+      ["Bosnia and Herzegovina","Sarajevo","BA"],
+      ["Bulgaria","Sofia","BG"],
+      ["Croatia","Zagreb","HR"],
+      ["Cyprus","Nicosia","CY"],
+      ["Czechia","Prague","CZ"],
+      ["Denmark","Copenhagen","DK"],
+      ["Estonia","Tallinn","EE"],
+      ["Finland","Helsinki","FI"],
+      ["France","Paris","FR"],
+      ["Germany","Berlin","DE"],
+      ["Greece","Athens","GR"],
+      ["Hungary","Budapest","HU"],
+      ["Iceland","Reykjavik","IS"],
+      ["Ireland","Dublin","IE"],
+      ["Italy","Rome","IT"],
+      ["Kosovo","Pristina","XK"],       // flag image fallback if not available
+      ["Latvia","Riga","LV"],
+      ["Liechtenstein","Vaduz","LI"],
+      ["Lithuania","Vilnius","LT"],
+      ["Luxembourg","Luxembourg","LU"],
+      ["Malta","Valletta","MT"],
+      ["Moldova","Chișinău","MD"],
+      ["Monaco","Monaco","MC"],
+      ["Montenegro","Podgorica","ME"],
+      ["Netherlands","Amsterdam","NL"],
+      ["North Macedonia","Skopje","MK"],
+      ["Norway","Oslo","NO"],
+      ["Poland","Warsaw","PL"],
+      ["Portugal","Lisbon","PT"],
+      ["Romania","Bucharest","RO"],
+      ["Russia","Moscow","RU"],
+      ["San Marino","San Marino","SM"],
+      ["Serbia","Belgrade","RS"],
+      ["Slovakia","Bratislava","SK"],
+      ["Slovenia","Ljubljana","SI"],
+      ["Spain","Madrid","ES"],
+      ["Sweden","Stockholm","SE"],
+      ["Switzerland","Bern","CH"],
+      ["Ukraine","Kyiv","UA"],
+      ["United Kingdom","London","GB"],
+      ["Vatican City","Vatican City","VA"]
     ];
 
-    // --- Helpers ---
+    const QUESTION_COUNT = 35;
+
+    const $country = document.getElementById("countryName");
+    const $flagWrap = document.getElementById("flagWrap");
+    const $choices = document.getElementById("choices");
+    const $qnum = document.getElementById("qnum");
+    const $note = document.getElementById("note");
+    const $results = document.getElementById("results");
+    const $reset = document.getElementById("resetBtn");
+
     function shuffle(arr){
       for(let i=arr.length-1;i>0;i--){
         const j=Math.floor(Math.random()*(i+1));
@@ -190,212 +191,140 @@
       return arr;
     }
 
-    function iso2ToFlag(iso2){
-      // Turn "SE" -> 🇸🇪 (regional indicator symbols)
-      // Works in most modern browsers/fonts; if not supported, it'll show letters.
-      if(!iso2 || iso2.length !== 2) return "🏳️";
-      const A = 0x1F1E6;
-      const codePoints = [...iso2.toUpperCase()].map(ch => A + (ch.charCodeAt(0) - 65));
-      return String.fromCodePoint(...codePoints);
+    function sampleWithoutReplacement(data, n){
+      const copy = [...data];
+      shuffle(copy);
+      return copy.slice(0, Math.min(n, copy.length));
     }
 
-    function buildDataset(){
-      const includeMicro = $includeMicro.checked;
-      const includeRussia = $includeRussia.checked;
-      const filtered = EUROPE_ALL.filter(([,, , isMicro, isRu]) => {
-        if(!includeMicro && isMicro) return false;
-        if(!includeRussia && isRu) return false;
-        return true;
-      });
-      return filtered;
-    }
-
-    function pickWrongCapitals(dataset, correctCapital, count=2){
-      const capitals = dataset.map(x => x[1]).filter(c => c !== correctCapital);
+    function pickWrongCapitals(correctCapital, count=2){
+      const capitals = EUROPE.map(x => x[1]).filter(c => c !== correctCapital);
       shuffle(capitals);
       return capitals.slice(0, count);
     }
 
-    // --- UI refs ---
-    const $country = document.getElementById("countryName");
-    const $flag = document.getElementById("flag");
-    const $choices = document.getElementById("choices");
-    const $feedback = document.getElementById("feedback");
-    const $feedbackText = document.getElementById("feedbackText");
-    const $hintArea = document.getElementById("hintArea");
+    function renderFlag(iso2){
+      // Use FlagCDN images so flags work everywhere (mobile included).
+      // Some codes like XK may not exist — we handle onerror.
+      const code = (iso2 || "").toLowerCase();
+      $flagWrap.innerHTML = "";
 
-    const $score = document.getElementById("score");
-    const $lives = document.getElementById("lives");
-    const $streak = document.getElementById("streak");
-    const $qnum = document.getElementById("qnum");
-    const $qtotal = document.getElementById("qtotal");
+      const img = document.createElement("img");
+      img.alt = iso2 ? `${iso2} flag` : "flag";
+      img.loading = "lazy";
+      img.decoding = "async";
+      // 48px wide container. Use 40px images + retina.
+      img.src = `https://flagcdn.com/w40/${code}.png`;
+      img.srcset = `https://flagcdn.com/w40/${code}.png 1x, https://flagcdn.com/w80/${code}.png 2x`;
 
-    const $skip = document.getElementById("skipBtn");
-    const $reset = document.getElementById("resetBtn");
+      img.onerror = () => {
+        $flagWrap.innerHTML = `<span class="flagFallback">${(iso2 || "??")}</span>`;
+      };
 
-    const $learnMode = document.getElementById("learnMode");
-    const $includeMicro = document.getElementById("includeMicro");
-    const $includeRussia = document.getElementById("includeRussia");
-
-    // --- State ---
-    let dataset = buildDataset();
-    let pool = shuffle([...dataset]); // countries left
-    let current = null;              // [country, capital, iso2, ...]
-    let score = 0;
-    let streak = 0;
-    let lives = 3;
-    let qnum = 1;
-
-    function setFeedback(text, kind="", hint=""){
-      $feedbackText.textContent = text;
-      $hintArea.textContent = hint;
-      $feedback.classList.remove("ok","no");
-      if(kind) $feedback.classList.add(kind);
+      $flagWrap.appendChild(img);
     }
 
-    function updateTop(){
-      $score.textContent = String(score);
-      $streak.textContent = String(streak);
-      $lives.textContent = String(lives);
-      $qnum.textContent = String(qnum);
-      $qtotal.textContent = String(dataset.length);
+    // --- Game state ---
+    let questions = [];
+    let index = 0;
+    let answers = []; // { country, iso2, correct, chosen }
+
+    function startNewQuiz(){
+      $results.style.display = "none";
+      $results.innerHTML = "";
+      $note.textContent = "Pick one option. We’ll show your final score at the end.";
+
+      answers = [];
+      index = 0;
+      questions = sampleWithoutReplacement(EUROPE, QUESTION_COUNT);
+
+      renderQuestion();
     }
 
     function renderQuestion(){
-      dataset = buildDataset();
-      // If toggles changed mid-game, rebuild pool but keep score etc.
-      // Easiest: reset pool to remaining unique countries (no duplicates) starting fresh:
-      // We’ll do a clean reset when toggles change, to avoid confusing state.
-      updateTop();
-
-      if(pool.length === 0){
-        $country.textContent = "Done!";
-        $flag.textContent = "🏁";
-        $choices.innerHTML = "";
-        setFeedback(`Finished! Final score: ${score}/${dataset.length}.`, "ok", "Press Reset to play again.");
-        $skip.disabled = true;
+      if(index >= questions.length){
+        showResults();
         return;
       }
 
-      $skip.disabled = false;
-      current = pool[0];
-      const [country, capital, iso2] = current;
-
+      const [country, capital, iso2] = questions[index];
       $country.textContent = country;
-      $flag.textContent = iso2ToFlag(iso2);
+      renderFlag(iso2);
+      $qnum.textContent = String(index + 1);
 
-      const options = shuffle([capital, ...pickWrongCapitals(dataset, capital, 2)]);
+      const options = shuffle([capital, ...pickWrongCapitals(capital, 2)]);
       $choices.innerHTML = "";
-
-      if($learnMode.checked){
-        // In learn mode, we reveal answer immediately and allow Next.
-        setFeedback(`Answer: ${capital}`, "ok", "Now pick it (or click Next).");
-      } else {
-        setFeedback("Select a capital.", "", lives <= 1 ? "Careful: last life!" : "");
-      }
 
       options.forEach(opt => {
         const btn = document.createElement("button");
         btn.className = "choice";
         btn.type = "button";
         btn.textContent = opt;
-        btn.addEventListener("click", () => handleGuess(opt));
+        btn.addEventListener("click", () => chooseAnswer(opt));
         $choices.appendChild(btn);
       });
-
-      // In learn mode, add a Next button at the end.
-      if($learnMode.checked){
-        const next = document.createElement("button");
-        next.className = "choice";
-        next.type = "button";
-        next.textContent = "Next →";
-        next.addEventListener("click", () => advance(true));
-        $choices.appendChild(next);
-      }
     }
 
     function disableChoices(){
       [...$choices.querySelectorAll("button.choice")].forEach(b => b.disabled = true);
     }
 
-    function advance(skipped=false){
-      // move on, reset lives per question
-      pool.shift();
-      qnum += 1;
-      lives = 3;
-      if(skipped){
-        streak = 0;
-      }
-      updateTop();
-      renderQuestion();
-    }
+    function chooseAnswer(chosen){
+      const [country, correct, iso2] = questions[index];
 
-    function handleGuess(selected){
-      if(!current) return;
-      const [country, correctCapital] = current;
-
-      if(selected === correctCapital){
-        score += 1;
-        streak += 1;
-        setFeedback(`✅ Correct! ${country}'s capital is ${correctCapital}.`, "ok", streak >= 3 ? `🔥 Streak: ${streak}` : "");
-        updateTop();
-        disableChoices();
-        setTimeout(() => advance(false), 650);
-        return;
-      }
-
-      // wrong:
-      streak = 0;
-      lives -= 1;
-      updateTop();
-
-      if(lives > 0){
-        setFeedback("❌ Not quite — try again.", "no", `Lives left: ${lives}`);
-        return; // keep buttons active
-      }
-
-      // Out of lives: reveal and move on
-      setFeedback(`💥 Out of lives. ${country}'s capital is ${correctCapital}.`, "no", "Next question…");
+      answers.push({ country, iso2, correct, chosen });
       disableChoices();
-      setTimeout(() => advance(true), 900);
+
+      // No feedback — just continue shortly
+      setTimeout(() => {
+        index += 1;
+        renderQuestion();
+      }, 200);
     }
 
-    // --- Controls ---
-    $skip.addEventListener("click", () => {
-      if(!current) return;
-      setFeedback(`Skipped. ${current[0]}'s capital is ${current[1]}.`, "", "Next question…");
-      disableChoices();
-      setTimeout(() => advance(true), 650);
-    });
+    function showResults(){
+      $choices.innerHTML = "";
+      $country.textContent = "Finished!";
+      $flagWrap.innerHTML = `<span class="flagFallback">🏁</span>`;
+      $note.textContent = "Results are below. Tap “New 35” to play again.";
 
-    $reset.addEventListener("click", () => {
-      score = 0; streak = 0; lives = 3; qnum = 1;
-      dataset = buildDataset();
-      pool = shuffle([...dataset]);
-      current = null;
-      updateTop();
-      renderQuestion();
-    });
+      const wrong = answers.filter(a => a.chosen !== a.correct);
+      const score = answers.length - wrong.length;
 
-    function resetForToggleChange(){
-      // clean reset, but keep it friendly
-      score = 0; streak = 0; lives = 3; qnum = 1;
-      dataset = buildDataset();
-      pool = shuffle([...dataset]);
-      current = null;
-      updateTop();
-      renderQuestion();
+      const wrongHtml = wrong.length === 0
+        ? `<p>Perfect score. Nothing wrong 🎯</p>`
+        : `
+          <p>You got <strong>${wrong.length}</strong> wrong:</p>
+          <ol class="wrongList">
+            ${wrong.map(w => `
+              <li>
+                <strong>${w.country}</strong> —
+                you chose <code class="k">${escapeHtml(w.chosen)}</code>,
+                correct is <code class="k">${escapeHtml(w.correct)}</code>
+              </li>
+            `).join("")}
+          </ol>
+        `;
+
+      $results.innerHTML = `
+        <h2>Final score: ${score}/${answers.length}</h2>
+        ${wrongHtml}
+      `;
+      $results.style.display = "block";
     }
 
-    $learnMode.addEventListener("change", () => renderQuestion());
-    $includeMicro.addEventListener("change", resetForToggleChange);
-    $includeRussia.addEventListener("change", resetForToggleChange);
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
 
-    // Init
-    dataset = buildDataset();
-    pool = shuffle([...dataset]);
-    updateTop();
-    renderQuestion();
+    $reset.addEventListener("click", startNewQuiz);
+
+    startNewQuiz();
   </script>
 </body>
 </html>
